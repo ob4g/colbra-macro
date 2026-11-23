@@ -190,7 +190,7 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
   <section class="notes">
     <h2>Notes</h2>
     <p>This tracker follows up on my undergraduate thesis (TCC) on oil and the Colombian economy. The question it keeps asking: when Brent moves, how much of that passes through to the peso and to the real? Colombia relies far more on crude for its export revenue than Brazil does, so the peso should track oil more closely.</p>
-    <p>The correlation figure under each indexed chart uses daily log changes of the currency's USD value against daily log changes of Brent, over the selected range. A positive number means the currency tends to strengthen on days oil rises.</p>
+    <p>The correlation figure under each indexed chart uses weekly log changes of the currency's USD value against weekly log changes of Brent, over the selected range. A positive number means the currency tends to strengthen in weeks when oil rises. Weekly changes are used because the TRM for a given day is set from the previous day's trading.</p>
   </section>
 
   <section class="sources">
@@ -235,16 +235,24 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
     return pts.map(p => ({ x: p.x, y: 100 * val(p) / b }));
   }
 
-  // Correlation of daily log changes, matched on dates both series have.
+  // Correlation of weekly log changes (last value of each week). Weekly, not daily,
+  // because the TRM applies on the day after the trades it averages, which would
+  // misalign same-day moves against Brent.
+  function weekly(pts) {
+    const m = new Map();
+    for (const p of pts) m.set(Math.floor((p.x / DAY + 3) / 7), p.y);  // weeks start Monday
+    return m;
+  }
   function corr(fx, oil) {
-    const om = new Map(oil.map(p => [p.x, p.y]));
-    const pairs = fx.filter(p => om.has(p.x)).map(p => [1 / p.y, om.get(p.x)]);
+    const fw = weekly(fx), ow = weekly(oil);
+    const weeks = [...fw.keys()].filter(w => ow.has(w)).sort((a, b) => a - b);
     const a = [], b = [];
-    for (let i = 1; i < pairs.length; i++) {
-      a.push(Math.log(pairs[i][0] / pairs[i - 1][0]));
-      b.push(Math.log(pairs[i][1] / pairs[i - 1][1]));
+    for (let i = 1; i < weeks.length; i++) {
+      if (weeks[i] - weeks[i - 1] !== 1) continue;
+      a.push(Math.log(fw.get(weeks[i - 1]) / fw.get(weeks[i])));  // USD value of the currency = 1 / rate
+      b.push(Math.log(ow.get(weeks[i]) / ow.get(weeks[i - 1])));
     }
-    const n = a.length; if (n < 20) return null;
+    const n = a.length; if (n < 12) return null;
     const ma = a.reduce((s, v) => s + v, 0) / n, mb = b.reduce((s, v) => s + v, 0) / n;
     let sab = 0, saa = 0, sbb = 0;
     for (let i = 0; i < n; i++) { const x = a[i] - ma, y = b[i] - mb; sab += x * y; saa += x * x; sbb += y * y; }
@@ -319,7 +327,7 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
 
   function stat(el, c, label) {
     el.innerHTML = c
-      ? `<span>Correlation of daily moves, ${label} vs Brent: <b>${nf(2).format(c.r)}</b></span><span>${c.n} trading days</span>`
+      ? `<span>Correlation of weekly moves, ${label} vs Brent: <b>${nf(2).format(c.r)}</b></span><span>${c.n} weeks</span>`
       : '<span>Not enough overlapping days for a correlation.</span>';
   }
 

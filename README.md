@@ -7,7 +7,7 @@ A side-by-side dashboard of the Colombian peso, the Brazilian real and Brent cru
 - Latest COP/USD, BRL/USD and Brent, with the change over 30 days
 - Each currency's exchange rate over the selected range (6M to Max, data from 2010)
 - Each currency's USD value indexed against Brent (start of range = 100)
-- Correlation of daily moves between each currency and Brent
+- Correlation of weekly moves between each currency and Brent
 
 ## Data sources (free, no API keys)
 
