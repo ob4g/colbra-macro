@@ -100,6 +100,13 @@ h3 { font-size: 14px; margin: 0; font-weight: 600; }
 .stat b { color: var(--text-primary); font-variant-numeric: tabular-nums; }
 
 .full { margin-top: 16px; }
+.brent-card { margin: 0 0 20px; }
+ul.news { list-style: none; margin: 0; padding: 0; }
+ul.news li { padding: 10px 0; border-top: 1px solid var(--border); }
+ul.news li:first-child { border-top: 0; padding-top: 4px; }
+ul.news a { color: var(--text-primary); text-decoration: none; font-weight: 500; line-height: 1.35; display: block; }
+ul.news a:hover { color: var(--accent); text-decoration: underline; }
+ul.news .meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .full .chart { height: 260px; }
 .soon { color: var(--text-muted); font-size: 13.5px; margin: 6px 0 0; }
 section.notes { margin-top: 28px; }
@@ -123,7 +130,7 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
   <header>
     <div>
       <h1>Colombia–Brazil Macro Tracker</h1>
-      <p class="sub">Two oil-exporting economies side by side: their currencies, Brent crude, and how closely each currency moves with oil.</p>
+      <p class="sub">Two oil-exporting economies side by side: their currencies, Brent crude, crude exports, and the latest oil and currency news.</p>
     </div>
     <div class="controls">
       <div class="seg" id="range" role="group" aria-label="Time range">
@@ -143,6 +150,12 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
     <div class="card kpi" id="k-brent"></div>
   </div>
 
+  <div class="card full brent-card">
+    <h3>Brent crude, USD per barrel</h3>
+    <p class="cap">Europe Brent spot price (EIA).</p>
+    <div class="chart"><canvas id="c-brent" aria-label="Brent price over time" role="img"></canvas></div>
+  </div>
+
   <div class="cols">
     <div class="col">
       <div class="col-head"><h2>Colombia</h2><span class="flag">COP · Ecopetrol · TRM</span></div>
@@ -157,6 +170,17 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
         <div class="legend"><span><i style="background:var(--co)"></i>Peso (USD per COP)</span><span><i style="background:var(--oil)"></i>Brent</span></div>
         <div class="chart"><canvas id="i-cop" aria-label="Peso and Brent indexed" role="img"></canvas></div>
         <div class="stat" id="s-cop"></div>
+      </div>
+      <div class="card">
+        <h3>Crude oil exports, USD millions per month</h3>
+        <p class="cap">FOB value of crude petroleum exports (HS 2709), as reported by DANE to UN Comtrade. Published with a lag of about 6 months.</p>
+        <div class="chart"><canvas id="o-co" aria-label="Colombia crude export value by month" role="img"></canvas></div>
+        <div class="stat" id="os-co"></div>
+      </div>
+      <div class="card">
+        <h3>Headlines</h3>
+        <p class="cap">Oil, currency and Ecopetrol news from the last two days (Google News).</p>
+        <ul class="news" id="n-co"><li class="soon">Loading…</li></ul>
       </div>
     </div>
     <div class="col">
@@ -173,18 +197,18 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
         <div class="chart"><canvas id="i-brl" aria-label="Real and Brent indexed" role="img"></canvas></div>
         <div class="stat" id="s-brl"></div>
       </div>
+      <div class="card">
+        <h3>Crude oil exports, USD millions per month</h3>
+        <p class="cap">FOB value of crude petroleum exports (NCM 2709), ComexStat. Published about two weeks after month end.</p>
+        <div class="chart"><canvas id="o-br" aria-label="Brazil crude export value by month" role="img"></canvas></div>
+        <div class="stat" id="os-br"></div>
+      </div>
+      <div class="card">
+        <h3>Headlines</h3>
+        <p class="cap">Oil, currency and Petrobras news from the last two days (Google News).</p>
+        <ul class="news" id="n-br"><li class="soon">Loading…</li></ul>
+      </div>
     </div>
-  </div>
-
-  <div class="card full">
-    <h3>Brent crude, USD per barrel</h3>
-    <p class="cap">Europe Brent spot price (EIA).</p>
-    <div class="chart"><canvas id="c-brent" aria-label="Brent price over time" role="img"></canvas></div>
-  </div>
-
-  <div class="cols full">
-    <div class="card"><h3>Oil exports and news, Colombia</h3><p class="soon">Monthly oil exports (DANE) and top headlines are coming in the next update.</p></div>
-    <div class="card"><h3>Oil exports and news, Brazil</h3><p class="soon">Monthly oil exports (ComexStat) and top headlines are coming in the next update.</p></div>
   </div>
 
   <section class="notes">
@@ -199,11 +223,14 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
       <li>COP/USD: Banco de la República TRM, via <a href="https://www.datos.gov.co/Econom-a-y-Finanzas/Tasa-de-Cambio-Representativa-del-Mercado-TRM/32sa-8pi3">datos.gov.co</a> · <a href="data/cop_usd.csv">CSV</a></li>
       <li>BRL/USD: Banco Central do Brasil, SGS series 1 (PTAX) · <a href="data/brl_usd.csv">CSV</a></li>
       <li>Brent: EIA spot price, via <a href="https://fred.stlouisfed.org/series/DCOILBRENTEU">FRED</a> · <a href="data/brent.csv">CSV</a></li>
+      <li>Crude exports, monthly FOB value and net weight: Colombia from DANE via <a href="https://comtradeplus.un.org/">UN Comtrade</a>, Brazil from <a href="https://comexstat.mdic.gov.br/">ComexStat</a>. Barrels per day are estimated at 7.33 barrels per tonne · <a href="data/crude_exports.json">JSON</a></li>
+      <li>Crude production: <a href="https://www.jodidata.org/oil/">JODI-Oil World Database</a> · <a href="data/crude_production.json">JSON</a></li>
+      <li>Headlines: Google News search, in Spanish for Colombia and Portuguese for Brazil</li>
     </ul>
     <p id="updated"></p>
   </section>
 
-  <footer>Data refreshes every weekday through a GitHub Action. Built by Gabriel as a TCC follow-up.</footer>
+  <footer>Prices refresh every weekday and headlines twice a day, through a GitHub Action. Built by Gabriel as a TCC follow-up.</footer>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -215,7 +242,7 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
   const fmtTick = (t, span) => new Date(t).toLocaleDateString('en-US', span > 400 * DAY ? { timeZone: 'UTC', year: 'numeric', month: 'short' } : { timeZone: 'UTC', month: 'short', day: 'numeric' });
   const nf = (d) => new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 
-  let DATA, range = '1Y';
+  let DATA, EXP, PROD, range = '1Y';
   try { const saved = localStorage.getItem('range'); if (saved) range = saved; } catch (e) {}
   const charts = {};
 
@@ -287,9 +314,14 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
     };
   }
 
-  function draw(id, datasets, digits, refLine) {
+  function draw(id, datasets, digits, refLine, monthly) {
     const span = datasets[0].data.length ? datasets[0].data.at(-1).x - datasets[0].data[0].x : 0;
     const opts = baseOpts(span, digits);
+    if (monthly) {
+      opts.plugins.tooltip.callbacks.title = items => new Date(items[0].parsed.x).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'long' });
+      opts.scales.x.ticks.callback = v => new Date(v).toLocaleDateString('en-US', { timeZone: 'UTC', year: span > 400 * DAY ? 'numeric' : undefined, month: 'short' });
+      opts.plugins.decimation.enabled = false;
+    }
     if (span) { opts.scales.x.min = datasets[0].data[0].x; opts.scales.x.max = datasets[0].data.at(-1).x; }
     if (refLine != null) {
       opts.plugins.refLine = { y: refLine };
@@ -356,6 +388,30 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
     stat(document.getElementById('s-cop'), corr(rc, ro), 'peso');
     stat(document.getElementById('s-brl'), corr(rb, ro), 'real');
 
+    if (EXP) {
+      const mo = t => new Date(t).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'short' });
+      for (const [c, color] of [['co', co], ['br', br]]) {
+        const rows = EXP.data[c] || [];
+        if (!rows.length) continue;
+        const val = rows.map(([m, usd]) => ({ x: Date.parse(m + '-01T00:00:00Z'), y: usd / 1e6 }));
+        // Monthly data: show at least 12 months even on short ranges.
+        const days = { '6M': 365, '1Y': 365, '3Y': 1096, '5Y': 1826 }[range];
+        const mFrom = days ? val.at(-1).x - days * DAY : -Infinity;
+        draw('o-' + c, [ds('Exports (USD m)', val.filter(p => p.x >= mFrom), color)], 0, null, true);
+
+        const [lm, lusd, lkg] = rows.at(-1);
+        const yAgo = rows.find(r => r[0] === (+lm.slice(0, 4) - 1) + lm.slice(4));
+        // Implied price: net tonnes x ~7.33 bbl per tonne (average crude). Approximate.
+        const bbl = lkg / 1000 * 7.33;
+        const parts = [`<span>${mo(Date.parse(lm + '-01'))}: <b>USD ${nf(0).format(lusd / 1e6)} m</b></span>`];
+        if (yAgo) { const ch = (lusd / yAgo[1] - 1) * 100; parts.push(`<span>${ch >= 0 ? '+' : ''}${nf(0).format(ch)}% vs a year earlier</span>`); }
+        if (bbl > 0) parts.push(`<span>about ${nf(0).format(bbl / 1e3 / new Date(Date.UTC(+lm.slice(0, 4), +lm.slice(5), 0)).getUTCDate())} kb/d</span>`);
+        const prod = PROD && (PROD.data[c + '_production'] || []).at(-1);
+        if (prod) parts.push(`<span>Production: <b>${nf(0).format(prod[1])} kb/d</b> (${mo(Date.parse(prod[0] + '-01'))}, JODI)</span>`);
+        document.getElementById('os-' + c).innerHTML = parts.join('');
+      }
+    }
+
     document.querySelectorAll('#range button').forEach(b => b.setAttribute('aria-pressed', b.dataset.r === range));
   }
 
@@ -374,6 +430,28 @@ footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
   });
   try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => DATA && render());
+
+  const esc = t => String(t ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  function ago(iso) {
+    if (!iso) return '';
+    const h = Math.round((Date.now() - Date.parse(iso)) / 36e5);
+    return h < 1 ? 'just now' : h < 24 ? `${h} h ago` : `${Math.round(h / 24)} d ago`;
+  }
+  function renderNews(j) {
+    for (const c of ['co', 'br']) {
+      const items = j.data[c] || [];
+      document.getElementById('n-' + c).innerHTML = items.length
+        ? items.map(it => `<li><a href="${esc(/^https?:/.test(it.url) ? it.url : '#')}" target="_blank" rel="noopener">${esc(it.title)}</a>
+            <div class="meta">${esc(it.source)}${it.published ? ' · ' + ago(it.published) : ''}</div></li>`).join('')
+        : '<li class="soon">No headlines in the last update.</li>';
+    }
+  }
+  const getJSON = u => fetch(u, { cache: 'no-cache' }).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+  getJSON('data/news.json').then(renderNews).catch(() => {
+    for (const c of ['co', 'br']) document.getElementById('n-' + c).innerHTML = '<li class="soon">Headlines are not available yet.</li>';
+  });
+  getJSON('data/crude_exports.json').then(j => { EXP = j; if (DATA) render(); }).catch(() => {});
+  getJSON('data/crude_production.json').then(j => { PROD = j; if (DATA) render(); }).catch(() => {});
 
   fetch('data/series.json', { cache: 'no-cache' })
     .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })

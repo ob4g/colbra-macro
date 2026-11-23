@@ -8,6 +8,8 @@ A side-by-side dashboard of the Colombian peso, the Brazilian real and Brent cru
 - Each currency's exchange rate over the selected range (6M to Max, data from 2010)
 - Each currency's USD value indexed against Brent (start of range = 100)
 - Correlation of weekly moves between each currency and Brent
+- Monthly crude oil export value for each country, with crude production
+- Latest oil and currency headlines for each country
 
 ## Data sources (free, no API keys)
 
@@ -16,13 +18,18 @@ A side-by-side dashboard of the Colombian peso, the Brazilian real and Brent cru
 | COP/USD (TRM) | Banco de la República, via [datos.gov.co](https://www.datos.gov.co/resource/32sa-8pi3.json) |
 | BRL/USD (PTAX) | Banco Central do Brasil, [SGS series 1](https://api.bcb.gov.br/dados/serie/bcdata.sgs.1/dados?formato=json) |
 | Brent | EIA spot price, via [FRED DCOILBRENTEU](https://fred.stlouisfed.org/series/DCOILBRENTEU) |
+| Crude exports, Colombia | DANE figures via the [UN Comtrade](https://comtradeplus.un.org/) public API (HS 2709). It has a daily quota, so history is filled in over a few runs |
+| Crude exports, Brazil | [ComexStat](https://comexstat.mdic.gov.br/) API (NCM 2709) |
+| Crude production | [JODI-Oil World Database](https://www.jodidata.org/oil/) |
+| Headlines | Google News RSS search, Spanish (Colombia) and Portuguese (Brazil) |
 
 ## How it works
 
 ```
 scripts/fetch.py      -> data/*.csv + data/series.json  (committed by the Action)
+scripts/extras.py     -> data/crude_exports.json, crude_production.json, news.json
 site/index.html       -> static page, reads data/series.json (Chart.js)
-.github/workflows/update.yml  -> weekdays 23:30 UTC: fetch, commit, deploy to Pages
+.github/workflows/update.yml  -> weekdays 23:30 UTC and daily 11:00 UTC: fetch, commit, deploy to Pages
 ```
 
 If one source is down, its previous data is kept and the other series still update.
@@ -40,7 +47,7 @@ mkdir -p _site && cp -r site/. _site/ && cp -r data _site/data
 python -m http.server -d _site 8000
 ```
 
-## Roadmap
+## Ideas
 
-- Monthly oil exports: DANE (Colombia), ComexStat (Brazil)
-- Top headlines per country (GDELT)
+- Export value in COP and BRL, to show the currency cushion when oil falls
+- Rolling correlation chart instead of a single number
