@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colombia–Brazil Macro Tracker</title>
+<meta name="description" content="Side-by-side tracker of the Colombian peso, Brazilian real and Brent crude, updated daily from Banco de la República, Banco Central do Brasil and EIA data.">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f5f2;
+  --surface-1: #fcfcfb;
+  --border: #e4e2dc;
+  --grid: #ecebe6;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7973;
+  --accent: #2a78d6;
+  --co: #2a78d6;     /* Colombia: categorical slot 1 */
+  --br: #eb6834;     /* Brazil: slot 2 */
+  --oil: #1baf7a;    /* Brent: slot 3 */
+  --up: #008300;
+  --down: #c62f2e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface-1: #1a1a19;
+    --border: #2e2d2b;
+    --grid: #262624;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --accent: #3987e5;
+    --co: #3987e5;
+    --br: #d95926;
+    --oil: #199e70;
+    --up: #2fb52f;
+    --down: #e66767;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface-1: #1a1a19;
+  --border: #2e2d2b;
+  --grid: #262624;
+  --text-primary: #f0efec;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e86;
+  --accent: #3987e5;
+  --co: #3987e5;
+  --br: #d95926;
+  --oil: #199e70;
+  --up: #2fb52f;
+  --down: #e66767;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 16px 64px; }
+header { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
+h1 { font-size: 26px; line-height: 1.2; margin: 0 0 4px; letter-spacing: -0.01em; }
+.sub { color: var(--text-secondary); margin: 0; max-width: 62ch; }
+.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface-1); }
+.seg button {
+  font: inherit; font-size: 13px; padding: 6px 11px; border: 0; background: transparent;
+  color: var(--text-secondary); cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.icon-btn { font: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-1); color: var(--text-secondary); cursor: pointer; }
+
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 20px; }
+.card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 16px; min-width: 0; }
+.kpi .label { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 13px; }
+.swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.kpi .value { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 2px; }
+.kpi .delta { font-size: 13px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.delta .up { color: var(--up); } .delta .down { color: var(--down); }
+
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.col-head { display: flex; align-items: baseline; gap: 10px; margin: 4px 0 10px; }
+.col-head h2 { font-size: 19px; margin: 0; }
+.col-head .flag { font-size: 13px; color: var(--text-muted); }
+.col > .card + .card { margin-top: 12px; }
+h3 { font-size: 14px; margin: 0; font-weight: 600; }
+.cap { font-size: 12.5px; color: var(--text-muted); margin: 2px 0 10px; }
+.chart { position: relative; height: 240px; }
+.legend { display: flex; gap: 14px; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 6px; flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 2px; border-radius: 1px; display: inline-block; }
+.stat { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 10px; font-size: 13px; color: var(--text-secondary); }
+.stat b { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+.full { margin-top: 16px; }
+.full .chart { height: 260px; }
+.soon { color: var(--text-muted); font-size: 13.5px; margin: 6px 0 0; }
+section.notes { margin-top: 28px; }
+section.notes h2, section.sources h2 { font-size: 17px; margin: 0 0 8px; }
+section.notes p { color: var(--text-secondary); max-width: 75ch; }
+section.sources { margin-top: 20px; font-size: 13px; color: var(--text-secondary); }
+section.sources ul { padding-left: 18px; margin: 6px 0; }
+a { color: var(--accent); }
+footer { margin-top: 28px; font-size: 12.5px; color: var(--text-muted); }
+.err { color: var(--down); }
+
+@media (max-width: 820px) {
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .kpis { grid-template-columns: minmax(0, 1fr); }
+  .chart { height: 220px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Colombia–Brazil Macro Tracker</h1>
+      <p class="sub">Two oil-exporting economies side by side: their currencies, Brent crude, and how closely each currency moves with oil.</p>
+    </div>
+    <div class="controls">
+      <div class="seg" id="range" role="group" aria-label="Time range">
+        <button data-r="6M">6M</button>
+        <button data-r="1Y" aria-pressed="true">1Y</button>
+        <button data-r="3Y">3Y</button>
+        <button data-r="5Y">5Y</button>
+        <button data-r="MAX">Max</button>
+      </div>
+      <button class="icon-btn" id="theme" aria-label="Toggle dark mode">◐ Theme</button>
+    </div>
+  </header>
+
+  <div class="kpis">
+    <div class="card kpi" id="k-cop"></div>
+    <div class="card kpi" id="k-brl"></div>
+    <div class="card kpi" id="k-brent"></div>
+  </div>
+
+  <div class="cols">
+    <div class="col">
+      <div class="col-head"><h2>Colombia</h2><span class="flag">COP · Ecopetrol · TRM</span></div>
+      <div class="card">
+        <h3>Exchange rate, COP per USD</h3>
+        <p class="cap">Higher means a weaker peso.</p>
+        <div class="chart"><canvas id="c-cop" aria-label="COP per USD over time" role="img"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Peso vs Brent, indexed</h3>
+        <p class="cap">Peso value in USD and Brent price, both set to 100 at the start of the range.</p>
+        <div class="legend"><span><i style="background:var(--co)"></i>Peso (USD per COP)</span><span><i style="background:var(--oil)"></i>Brent</span></div>
+        <div class="chart"><canvas id="i-cop" aria-label="Peso and Brent indexed" role="img"></canvas></div>
+        <div class="stat" id="s-cop"></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="col-head"><h2>Brazil</h2><span class="flag">BRL · Petrobras · PTAX</span></div>
+      <div class="card">
+        <h3>Exchange rate, BRL per USD</h3>
+        <p class="cap">Higher means a weaker real.</p>
+        <div class="chart"><canvas id="c-brl" aria-label="BRL per USD over time" role="img"></canvas></div>
+      </div>
+      <div class="card">
+        <h3>Real vs Brent, indexed</h3>
+        <p class="cap">Real value in USD and Brent price, both set to 100 at the start of the range.</p>
+        <div class="legend"><span><i style="background:var(--br)"></i>Real (USD per BRL)</span><span><i style="background:var(--oil)"></i>Brent</span></div>
+        <div class="chart"><canvas id="i-brl" aria-label="Real and Brent indexed" role="img"></canvas></div>
+        <div class="stat" id="s-brl"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card full">
+    <h3>Brent crude, USD per barrel</h3>
+    <p class="cap">Europe Brent spot price (EIA).</p>
+    <div class="chart"><canvas id="c-brent" aria-label="Brent price over time" role="img"></canvas></div>
+  </div>
+
+  <div class="cols full">
+    <div class="card"><h3>Oil exports and news, Colombia</h3><p class="soon">Monthly oil exports (DANE) and top headlines are coming in the next update.</p></div>
+    <div class="card"><h3>Oil exports and news, Brazil</h3><p class="soon">Monthly oil exports (ComexStat) and top headlines are coming in the next update.</p></div>
+  </div>
+
+  <section class="notes">
+    <h2>Notes</h2>
+    <p>This tracker follows up on my undergraduate thesis (TCC) on oil and the Colombian economy. The question it keeps asking: when Brent moves, how much of that passes through to the peso and to the real? Colombia relies far more on crude for its export revenue than Brazil does, so the peso should track oil more closely.</p>
+    <p>The correlation figure under each indexed chart uses daily log changes of the currency's USD value against daily log changes of Brent, over the selected range. A positive number means the currency tends to strengthen on days oil rises.</p>
+  </section>
+
+  <section class="sources">
+    <h2>Data</h2>
+    <ul>
+      <li>COP/USD: Banco de la República TRM, via <a href="https://www.datos.gov.co/Econom-a-y-Finanzas/Tasa-de-Cambio-Representativa-del-Mercado-TRM/32sa-8pi3">datos.gov.co</a> · <a href="data/cop_usd.csv">CSV</a></li>
+      <li>BRL/USD: Banco Central do Brasil, SGS series 1 (PTAX) · <a href="data/brl_usd.csv">CSV</a></li>
+      <li>Brent: EIA spot price, via <a href="https://fred.stlouisfed.org/series/DCOILBRENTEU">FRED</a> · <a href="data/brent.csv">CSV</a></li>
+    </ul>
+    <p id="updated"></p>
+  </section>
+
+  <footer>Data refreshes every weekday through a GitHub Action. Built by Gabriel as a TCC follow-up.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(() => {
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const DAY = 864e5;
+  const fmtDate = t => new Date(t).toLocaleDateString('en-US', { timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric' });
+  const fmtTick = (t, span) => new Date(t).toLocaleDateString('en-US', span > 400 * DAY ? { timeZone: 'UTC', year: 'numeric', month: 'short' } : { timeZone: 'UTC', month: 'short', day: 'numeric' });
+  const nf = (d) => new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  let DATA, range = '1Y';
+  try { const saved = localStorage.getItem('range'); if (saved) range = saved; } catch (e) {}
+  const charts = {};
+
+  const toPts = arr => arr.map(([d, v]) => ({ x: Date.parse(d + 'T00:00:00Z'), y: v }));
+
+  function cutoff(pts) {
+    const last = pts[pts.length - 1].x;
+    const days = { '6M': 182, '1Y': 365, '3Y': 1096, '5Y': 1826 }[range];
+    return days ? last - days * DAY : -Infinity;
+  }
+  const inRange = (pts, from) => pts.filter(p => p.x >= from);
+
+  function indexed(pts, invert) {
+    if (!pts.length) return [];
+    const val = p => invert ? 1 / p.y : p.y;
+    const b = val(pts[0]);
+    return pts.map(p => ({ x: p.x, y: 100 * val(p) / b }));
+  }
+
+  // Correlation of daily log changes, matched on dates both series have.
+  function corr(fx, oil) {
+    const om = new Map(oil.map(p => [p.x, p.y]));
+    const pairs = fx.filter(p => om.has(p.x)).map(p => [1 / p.y, om.get(p.x)]);
+    const a = [], b = [];
+    for (let i = 1; i < pairs.length; i++) {
+      a.push(Math.log(pairs[i][0] / pairs[i - 1][0]));
+      b.push(Math.log(pairs[i][1] / pairs[i - 1][1]));
+    }
+    const n = a.length; if (n < 20) return null;
+    const ma = a.reduce((s, v) => s + v, 0) / n, mb = b.reduce((s, v) => s + v, 0) / n;
+    let sab = 0, saa = 0, sbb = 0;
+    for (let i = 0; i < n; i++) { const x = a[i] - ma, y = b[i] - mb; sab += x * y; saa += x * x; sbb += y * y; }
+    return { r: sab / Math.sqrt(saa * sbb), n };
+  }
+
+  function baseOpts(span, digits) {
+    const grid = css('--grid'), muted = css('--text-muted'), text = css('--text-primary');
+    return {
+      responsive: true, maintainAspectRatio: false, animation: false, parsing: false, normalized: true,
+      interaction: { mode: 'index', axis: 'x', intersect: false },
+      plugins: {
+        legend: { display: false },
+        decimation: { enabled: true, algorithm: 'lttb', samples: 500 },
+        tooltip: {
+          backgroundColor: css('--surface-1'), titleColor: text, bodyColor: text,
+          borderColor: css('--border'), borderWidth: 1, padding: 10, boxPadding: 4, usePointStyle: true,
+          callbacks: {
+            title: items => fmtDate(items[0].parsed.x),
+            label: c => ` ${c.dataset.label}: ${nf(digits).format(c.parsed.y)}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          type: 'linear', grid: { display: false }, border: { color: grid },
+          ticks: { color: muted, maxTicksLimit: 6, maxRotation: 0, callback: v => fmtTick(v, span) },
+        },
+        y: { grid: { color: grid }, border: { display: false }, ticks: { color: muted, maxTicksLimit: 6 } },
+      },
+      elements: { point: { radius: 0, hoverRadius: 5, hoverBorderWidth: 2, hoverBorderColor: css('--surface-1') }, line: { borderWidth: 2, tension: 0 } },
+    };
+  }
+
+  function draw(id, datasets, digits, refLine) {
+    const span = datasets[0].data.length ? datasets[0].data.at(-1).x - datasets[0].data[0].x : 0;
+    const opts = baseOpts(span, digits);
+    if (span) { opts.scales.x.min = datasets[0].data[0].x; opts.scales.x.max = datasets[0].data.at(-1).x; }
+    if (refLine != null) {
+      opts.plugins.refLine = { y: refLine };
+    }
+    const cfg = { type: 'line', data: { datasets }, options: opts, plugins: refLine != null ? [refPlugin] : [] };
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart(document.getElementById(id), cfg);
+  }
+
+  // Dashed reference line at y = 100 on indexed charts.
+  const refPlugin = {
+    id: 'refLine',
+    beforeDatasetsDraw(chart, _a, o) {
+      const y0 = o.y;
+      const { ctx, chartArea: a, scales: { y } } = chart;
+      const py = y.getPixelForValue(y0);
+      if (py < a.top || py > a.bottom) return;
+      ctx.save(); ctx.strokeStyle = css('--text-muted'); ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(a.left, py); ctx.lineTo(a.right, py); ctx.stroke(); ctx.restore();
+    },
+  };
+
+  const ds = (label, data, color) => ({ label, data, borderColor: color, backgroundColor: color, pointHoverBackgroundColor: color });
+
+  function kpi(el, name, color, pts, digits, unit, weakerWhenUp) {
+    const last = pts.at(-1);
+    const prior = pts.filter(p => p.x <= last.x - 30 * DAY).at(-1) || pts[0];
+    const ch = (last.y / prior.y - 1) * 100;
+    const cls = ch === 0 ? '' : ((ch > 0) !== weakerWhenUp ? 'up' : 'down');
+    el.innerHTML = `
+      <div class="label"><span class="swatch" style="background:${color}"></span>${name}</div>
+      <div class="value">${nf(digits).format(last.y)} <span style="font-size:14px;font-weight:400;color:var(--text-muted)">${unit}</span></div>
+      <div class="delta"><span class="${cls}">${ch >= 0 ? '▲' : '▼'} ${nf(1).format(Math.abs(ch))}%</span> vs 30 days ago · ${fmtDate(last.x)}</div>`;
+  }
+
+  function stat(el, c, label) {
+    el.innerHTML = c
+      ? `<span>Correlation of daily moves, ${label} vs Brent: <b>${nf(2).format(c.r)}</b></span><span>${c.n} trading days</span>`
+      : '<span>Not enough overlapping days for a correlation.</span>';
+  }
+
+  function render() {
+    const S = DATA.series;
+    const cop = toPts(S.cop_usd), brl = toPts(S.brl_usd), oil = toPts(S.brent);
+    const co = css('--co'), br = css('--br'), oc = css('--oil');
+
+    kpi(document.getElementById('k-cop'), 'COP per USD', co, cop, 0, 'COP', true);
+    kpi(document.getElementById('k-brl'), 'BRL per USD', br, brl, 3, 'BRL', true);
+    kpi(document.getElementById('k-brent'), 'Brent', oc, oil, 2, 'USD/bbl', false);
+
+    const from = Math.max(cutoff(cop), cutoff(brl), cutoff(oil));
+    const rc = inRange(cop, from), rb = inRange(brl, from), ro = inRange(oil, from);
+
+    draw('c-cop', [ds('COP per USD', rc, co)], 0);
+    draw('c-brl', [ds('BRL per USD', rb, br)], 3);
+    draw('c-brent', [ds('Brent (USD/bbl)', ro, oc)], 2);
+
+    // Index from the first date all three series cover in the range.
+    const start = Math.max(rc[0]?.x ?? 0, rb[0]?.x ?? 0, ro[0]?.x ?? 0);
+    const oi = indexed(ro.filter(p => p.x >= start));
+    draw('i-cop', [ds('Peso', indexed(rc.filter(p => p.x >= start), true), co), ds('Brent', oi, oc)], 1, 100);
+    draw('i-brl', [ds('Real', indexed(rb.filter(p => p.x >= start), true), br), ds('Brent', oi, oc)], 1, 100);
+
+    stat(document.getElementById('s-cop'), corr(rc, ro), 'peso');
+    stat(document.getElementById('s-brl'), corr(rb, ro), 'real');
+
+    document.querySelectorAll('#range button').forEach(b => b.setAttribute('aria-pressed', b.dataset.r === range));
+  }
+
+  document.getElementById('range').addEventListener('click', e => {
+    const r = e.target.closest('button')?.dataset.r; if (!r) return;
+    range = r; try { localStorage.setItem('range', r); } catch (err) {}
+    render();
+  });
+
+  document.getElementById('theme').addEventListener('click', () => {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('theme', root.dataset.theme); } catch (err) {}
+    if (DATA) render();
+  });
+  try { const t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => DATA && render());
+
+  fetch('data/series.json', { cache: 'no-cache' })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(j => {
+      DATA = j;
+      const m = j.meta;
+      document.getElementById('updated').textContent =
+        `Latest observations: COP ${m.cop_usd.last}, BRL ${m.brl_usd.last}, Brent ${m.brent.last}.`;
+      render();
+    })
+    .catch(err => {
+      document.querySelector('.kpis').innerHTML = `<p class="err">Could not load data (${err.message}). The first scheduled update may not have run yet.</p>`;
+    });
+})();
+</script>
+</body>
+</html>
