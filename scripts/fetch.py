@@ -8,6 +8,7 @@ Sources (all free, no API key):
 Output:
   data/cop_usd.csv, data/brl_usd.csv, data/brent.csv  (date,value)
   data/series.json                                     (all three, for the site)
+  data/crude_exports.json, data/crude_production.json, data/news.json (see extras.py)
 
 A source that fails keeps its previous CSV, so one outage never blanks the site.
 """
@@ -24,9 +25,11 @@ import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
+import extras
+
 START = date(2010, 1, 1)
 DATA = Path(__file__).resolve().parent.parent / "data"
-UA = {"User-Agent": "macro-tracker/1.0 (+github actions)"}
+UA = {"User-Agent": "macro-tracker/1.0 (+github actions)", "Cache-Control": "no-cache"}
 
 
 def get(url: str, tries: int = 4) -> bytes:
@@ -144,8 +147,11 @@ def main() -> int:
         }
 
     meta_path.write_text(json.dumps(payload, separators=(",", ":")))
+
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    failures += extras.run(get, DATA, now)
     # Fail the job only if every source failed, so partial updates still deploy.
-    return 1 if failures == len(SOURCES) else 0
+    return 1 if failures == len(SOURCES) + 3 else 0
 
 
 if __name__ == "__main__":
